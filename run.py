@@ -9,20 +9,20 @@ import argparse
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--INPUT_ROOT', type=str, default='DCMs', help='root directory of dcm slices.')
-parser.add_argument('--ANNONYM_DCM_ROOT', type=str, default='DCMs_annonymized', help='root directory of dcm slices.')
-parser.add_argument('--ANNONYM_NRRD_ROOT', type=str, default='NRRDs_annonymized', help='root directory of dcm slices.')
+parser.add_argument('--ANONYM_DCM_ROOT', type=str, default='DCMs_anonymized', help='root directory of dcm slices.')
+parser.add_argument('--ANONYM_NRRD_ROOT', type=str, default='NRRDs_anonymized', help='root directory of dcm slices.')
 parser.add_argument('--VERBOSE', action='store_true', help='If true, convert and save anonymized dcms to nrrd format.')
 parser.set_defaults(VERBOSE=False)
 args = parser.parse_args()
 
 INPUT_ROOT = args.INPUT_ROOT
-ANNONYM_DCM_ROOT = args.ANNONYM_DCM_ROOT
-ANNONYM_NRRD_ROOT = args.ANNONYM_NRRD_ROOT
+ANONYM_DCM_ROOT = args.ANONYM_DCM_ROOT
+ANONYM_NRRD_ROOT = args.ANONYM_NRRD_ROOT
 
 TARGET_ELEMENTS = []
 for line in open('target_elements.txt', 'r'):
     TARGET_ELEMENTS.append(line.strip())    
-print(f'Start annonimzation process for {TARGET_ELEMENTS}')
+print(f'Start anonymization process for {TARGET_ELEMENTS}')
 
 def anonymize(dataset, data_elements, 
                        replacement_str="anonymous"):
@@ -37,7 +37,7 @@ def anonymize(dataset, data_elements,
 
 
 input_folders = natsorted(glob.glob(f'{INPUT_ROOT}/*'))
-out_paths = [ os.path.join(ANNONYM_NRRD_ROOT, os.path.basename(infold)+'.nrrd') for infold in input_folders ]
+out_paths = [ os.path.join(ANONYM_NRRD_ROOT, os.path.basename(infold)+'.nrrd') for infold in input_folders ]
 
 for infold, outpath in tqdm(list(zip(input_folders, out_paths))):
     filename_list = natsorted(glob.glob(infold+'/*'))
@@ -49,13 +49,13 @@ for infold, outpath in tqdm(list(zip(input_folders, out_paths))):
         dataset = anonymize(dataset, TARGET_ELEMENTS)
         
         # save resulting dataset
-        ann_dir = infold.replace(INPUT_ROOT, ANNONYM_DCM_ROOT)
-        if not os.path.exists(ann_dir):
-            print(f'create directory at {ann_dir}')
-            os.system(f'mkdir -p {ann_dir}') # cretae a new dir
+        anm_dir = infold.replace(INPUT_ROOT, ANONYM_DCM_ROOT)
+        if not os.path.exists(anm_dir):
+            print(f'create directory at {anm_dir}')
+            os.system(f'mkdir -p {anm_dir}') # cretae a new dir
             
-        ann_path = os.path.join(ann_dir, os.path.basename(filename))
-        dataset.save_as(ann_path)
+        anm_path = os.path.join(anm_dir, os.path.basename(filename))
+        dataset.save_as(anm_path)
         
         if args.VERBOSE:
             for de in TARGET_ELEMENTS:
