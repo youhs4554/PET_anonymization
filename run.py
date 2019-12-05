@@ -52,8 +52,7 @@ for infold, outpath in tqdm(list(zip(input_folders, out_paths))):
         anm_dir = infold.replace(INPUT_ROOT, ANONYM_DCM_ROOT)
         if not os.path.exists(anm_dir):
             print(f'create directory at {anm_dir}')
-            os.system(f'mkdir -p {anm_dir}') # cretae a new dir
-            
+            os.makedirs(anm_dir, exist_ok=True) # create a new dir
         anm_path = os.path.join(anm_dir, os.path.basename(filename))
         dataset.save_as(anm_path)
         
@@ -64,7 +63,7 @@ for infold, outpath in tqdm(list(zip(input_folders, out_paths))):
     # convert dcm -> nrrd
     if not os.path.exists(outpath):
         print(f'create directory at {os.path.dirname(outpath)}')
-        os.system(f'mkdir -p {os.path.dirname(outpath)}') # cretae a new dir
+        os.makedirs(os.path.dirname(outpath), exist_ok=True) # create a new dir
     dcm_to_nrrd(infold, outpath, intensity_windowing=True)
 
 print('Done!')
