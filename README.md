@@ -30,6 +30,5 @@ python run.py --help
 # example cmd
 python run.py --INPUT_ROOT /path/to/DCM_ROOT
               --ANONYM_DCM_ROOT /path/to/ANONYM_DCM_TOOT
-              --ANONYM_NRRD_ROOT /path/to/ANONYM_NRRD_ROOT
               --VERBOSE
 ```
