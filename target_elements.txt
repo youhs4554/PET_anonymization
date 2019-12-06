@@ -1,2 +1,4 @@
-PatientID
+PatientAge
 PatientBirthDate
+PatientID
+PatientName
