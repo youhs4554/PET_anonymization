@@ -6,6 +6,7 @@ import glob
 from natsort import natsorted
 from tqdm import tqdm
 import argparse
+from multiprocessing import Pool
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--INPUT_ROOT', type=str, default='DCMs', help='root directory of dcm slices.')
@@ -39,7 +40,7 @@ def anonymize(dataset, data_elements,
 input_folders = natsorted(glob.glob(f'{INPUT_ROOT}/*'))
 out_paths = [ os.path.join(ANONYM_NRRD_ROOT, os.path.basename(infold)+'.nrrd') for infold in input_folders ]
 
-for infold, outpath in tqdm(list(zip(input_folders, out_paths))):
+def runner(infold):
     filename_list = natsorted(glob.glob(infold+'/*'))
     
     # anonymize and save as .dcm
@@ -52,18 +53,18 @@ for infold, outpath in tqdm(list(zip(input_folders, out_paths))):
         anm_dir = infold.replace(INPUT_ROOT, ANONYM_DCM_ROOT)
         if not os.path.exists(anm_dir):
             print(f'create directory at {anm_dir}')
-            os.makedirs(anm_dir, exist_ok=True) # create a new dir
+            os.makedirs(anm_dir, exist_ok=True) # cretae a new dir
         anm_path = os.path.join(anm_dir, os.path.basename(filename))
         dataset.save_as(anm_path)
         
         if args.VERBOSE:
             for de in TARGET_ELEMENTS:
                 print(filename, dataset.data_element(de))
-    
-    # convert dcm -> nrrd
-    if not os.path.exists(outpath):
-        print(f'create directory at {os.path.dirname(outpath)}')
-        os.makedirs(os.path.dirname(outpath), exist_ok=True) # create a new dir
-    dcm_to_nrrd(infold, outpath, intensity_windowing=True)
 
-print('Done!')
+
+
+if __name__ == '__main__':
+    pool = Pool(8)
+    pool.map(runner, input_folders)
+
+    print('Done!')
