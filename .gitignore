@@ -2,3 +2,5 @@
 *.nrrd
 *.dcm
 *.vscode
+*.xlsx
+data/*

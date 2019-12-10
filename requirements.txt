@@ -4,3 +4,5 @@ tqdm==4.32.1
 SimpleITK==1.2.4
 dicom==0.9.9.post1
 p-tqdm==1.2
+pandas==0.25.3
+xlrd==1.2.0
