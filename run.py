@@ -9,6 +9,7 @@ import argparse
 import pandas as pd
 import numpy as np
 from multiprocessing import Pool
+from utils import download_dependencies, get_suv_factor
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--INPUT_ROOT', type=str,
@@ -58,9 +59,10 @@ def anonymize(dataset, data_elements,
 
     return dataset
 
-
 def runner(infold):
     filename_list = natsorted(glob.glob(infold+'/*'))
+    # run SUVFactorCalculator
+    suv = get_suv_factor(infold)
 
     # anonymize and save as .dcm
     try:
@@ -76,12 +78,27 @@ def runner(infold):
 
             anm_dir = infold.replace(
                 INPUT_ROOT, ANONYM_DCM_ROOT).replace(pid, cvt_ix)
-            if not os.path.exists(anm_dir):
-                print(f'create directory at {anm_dir}')
-                os.makedirs(anm_dir, exist_ok=True)  # cretae a new dir
+            anm_dir_raw = os.path.join(anm_dir, 'raw')
+            
+            # directory for raw anonymized dcms
+            if not os.path.exists(anm_dir_raw):
+                print(f'create directory at {anm_dir_raw}')
+                os.makedirs(anm_dir_raw, exist_ok=True)  # cretae a new dir
+
+            # directory for SUV-converted anonymized dcms
+            anm_dir_suv = os.path.join(anm_dir, 'suv')
+            if not os.path.exists(anm_dir_suv):
+                print(f'create directory at {anm_dir_suv}')
+                os.makedirs(anm_dir_suv, exist_ok=True)  # cretae a new dir
+                
             _, ext = os.path.splitext(os.path.basename(filename))
-            anm_path = os.path.join(anm_dir, f'PET{i:04}'+ext)
-            dataset.save_as(anm_path)
+            anm_path = os.path.join(anm_dir_raw, f'PET{i:04}'+ext)
+            dataset.save_as(anm_path)   # 1 : save original pixel data
+            
+            # multiply with SUV-ScaleFactor
+            anm_suv_path = os.path.join(anm_dir_suv, f'PET{i:04}'+ext)
+            dataset.PixelData = (suv * dataset.pixel_array).astype(dataset.pixel_array.dtype).tobytes()
+            dataset.save_as(anm_suv_path)
 
             if args.VERBOSE:
                 for de in TARGET_ELEMENTS:
@@ -91,6 +108,10 @@ def runner(infold):
 
 
 if __name__ == '__main__':
+    # Download dependencies from GoogleDrive
+    if not os.path.exists('./lib/Slicer-4.10.2-linux-amd64') and not os.path.exists('./lib/NA-MIC'):
+        download_dependencies()
+    
     pool = Pool(8)
 
     pool.map(runner, input_folders)

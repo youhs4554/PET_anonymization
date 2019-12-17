@@ -2,6 +2,54 @@
 import SimpleITK as sitk
 import dicom
 
+from google_drive_downloader import GoogleDriveDownloader as gdd
+import os
+import json
+from copy import deepcopy, copy
+import subprocess
+import pydicom
+from pathlib import Path
+
+def fetch_file_from_google_drive(file_map, file_id):
+    print(f'###Download {file_map[file_id]}###')
+    gdd.download_file_from_google_drive(file_id=file_id,
+                                        dest_path='./lib/tmp.zip',
+                                        unzip=True)
+    os.system('rm ./lib/tmp.zip')
+
+def download_dependencies(manifest_path='./gdrive_manifest.json'):
+    file_map = json.load(open(manifest_path))
+
+    for file_id in file_map:
+        fetch_file_from_google_drive(file_map, file_id)
+    
+    # setup for Slicer App
+    os.system(f'chmod -R 777 ./lib/Slicer-4.10.2-linux-amd64/Slicer')
+
+    # setup for lib usage
+    config_home = os.path.join(str(Path.home()), '.config')
+    os.system(f'cp -r ./lib/NA-MIC {config_home} && chmod -R 777 {config_home}')
+
+def get_suv_factor(infold):
+    res = subprocess.run(['./lib/Slicer-4.10.2-linux-amd64/Slicer',
+                          '--launch', 'SUVFactorCalculator',
+                          '-p', infold,
+                          '-r', '.'], stdout=subprocess.PIPE)
+
+    for line in res.stdout.split(b'\n'):
+        if line.startswith(b'saving to'):
+            line = line.decode('utf-8')
+            break
+
+    res_dcm = line.split()[-1]
+
+    d = pydicom.read_file(res_dcm)
+    suv = d.ReferencedImageRealWorldValueMappingSequence[0].RealWorldValueMappingSequence[0].RealWorldValueSlope
+    os.remove(res_dcm)
+    
+    return suv
+
+
 def dcm_to_nrrd(folder, to_path, intensity_windowing=True, compression=False):
     """Read a folder with DICOM files and convert to a nrrd file.
     Assumes that there is only one DICOM series in the folder.
