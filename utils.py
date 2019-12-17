@@ -20,22 +20,21 @@ def fetch_file_from_google_drive(file_map, file_id):
 def download_dependencies(manifest_path='./gdrive_manifest.json'):
     file_map = json.load(open(manifest_path))
 
-    for file_id in file_map:
-        fetch_file_from_google_drive(file_map, file_id)
-    
+    #for file_id in file_map:
+    #    fetch_file_from_google_drive(file_map, file_id)
+    fetch_file_from_google_drive(file_map, list(file_map.keys())[1]) 
     # setup for Slicer App
     os.system(f'chmod -R 777 ./lib/Slicer-4.10.2-linux-amd64/Slicer')
 
     # setup for lib usage
     config_home = os.path.join(str(Path.home()), '.config')
-    os.system(f'cp -r ./lib/NA-MIC {config_home} && chmod -R 777 {config_home}')
+    os.system(f'mkdir -p {config_home} && cp -r ./lib/NA-MIC {config_home} && chmod -R 777 {config_home}')
 
 def get_suv_factor(infold):
     res = subprocess.run(['./lib/Slicer-4.10.2-linux-amd64/Slicer',
                           '--launch', 'SUVFactorCalculator',
                           '-p', infold,
                           '-r', '.'], stdout=subprocess.PIPE)
-
     for line in res.stdout.split(b'\n'):
         if line.startswith(b'saving to'):
             line = line.decode('utf-8')
