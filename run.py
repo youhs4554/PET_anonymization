@@ -109,9 +109,8 @@ def runner(infold):
 
 if __name__ == '__main__':
     # Download dependencies from GoogleDrive
-    #if not os.path.exists('./lib/Slicer-4.10.2-linux-amd64') and not os.path.exists('./lib/NA-MIC'):
-    #    download_dependencies()
-    download_dependencies()
+    if not os.path.exists('./lib/Slicer-4.10.2-linux-amd64') and not os.path.exists('./lib/NA-MIC'):
+        download_dependencies()
     pool = Pool(8)
 
     pool.map(runner, input_folders)

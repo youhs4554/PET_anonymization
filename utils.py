@@ -20,9 +20,8 @@ def fetch_file_from_google_drive(file_map, file_id):
 def download_dependencies(manifest_path='./gdrive_manifest.json'):
     file_map = json.load(open(manifest_path))
 
-    #for file_id in file_map:
-    #    fetch_file_from_google_drive(file_map, file_id)
-    fetch_file_from_google_drive(file_map, list(file_map.keys())[1]) 
+    for file_id in file_map:
+        fetch_file_from_google_drive(file_map, file_id)
     # setup for Slicer App
     os.system(f'chmod -R 777 ./lib/Slicer-4.10.2-linux-amd64/Slicer')
 
