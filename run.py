@@ -10,6 +10,7 @@ import pandas as pd
 import numpy as np
 from multiprocessing import Pool
 from utils import download_dependencies, get_suv_factor
+import SimpleITK as sitk
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--INPUT_ROOT', type=str,
@@ -63,6 +64,7 @@ def runner(infold):
     filename_list = natsorted(glob.glob(infold+'/*'))
     # run SUVFactorCalculator
     suv = get_suv_factor(infold)
+    suv_slices = []
 
     # anonymize and save as .dcm
     try:
@@ -84,25 +86,28 @@ def runner(infold):
             if not os.path.exists(anm_dir_raw):
                 print(f'create directory at {anm_dir_raw}')
                 os.makedirs(anm_dir_raw, exist_ok=True)  # cretae a new dir
-
-            # directory for SUV-converted anonymized dcms
-            anm_dir_suv = os.path.join(anm_dir, 'suv')
-            if not os.path.exists(anm_dir_suv):
-                print(f'create directory at {anm_dir_suv}')
-                os.makedirs(anm_dir_suv, exist_ok=True)  # cretae a new dir
-                
+               
             _, ext = os.path.splitext(os.path.basename(filename))
             anm_path = os.path.join(anm_dir_raw, f'PET{i:04}'+ext)
             dataset.save_as(anm_path)   # 1 : save original pixel data
             
             # multiply with SUV-ScaleFactor
-            anm_suv_path = os.path.join(anm_dir_suv, f'PET{i:04}'+ext)
-            dataset.PixelData = (suv * dataset.pixel_array).astype(dataset.pixel_array.dtype).tobytes()
-            dataset.save_as(anm_suv_path)
+            img = sitk.GetArrayFromImage(sitk.ReadImage(anm_path))  # (1,h,w)
+            #anm_suv_path = os.path.join(anm_dir_suv, f'PET{i:04}'+'.nrrd')
 
+            suv_slices.append( suv * img )
+            suv_img = sitk.GetImageFromArray(suv * img)
+           
             if args.VERBOSE:
                 for de in TARGET_ELEMENTS:
                     print(filename, dataset.data_element(de))
+
+        suv_volume = sitk.GetImageFromArray(np.vstack(suv_slices)[::-1])
+        suv_volume = sitk.Cast(suv_volume, sitk.sitkFloat64)
+        
+        # write a resulting volume as .nrrd file
+        sitk.WriteImage(suv_volume, os.path.join(anm_dir, 'SUV.nrrd'))
+
     except KeyboardInterrupt:
         raise Exception('User Interrupt')
 
