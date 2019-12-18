@@ -1,6 +1,6 @@
 # PET_anonymization
 
-PET_anonymization toolkit instructions
+PET_anonymization toolkit instruction
 
 ## Installation
 
