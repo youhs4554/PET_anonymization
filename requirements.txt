@@ -7,4 +7,4 @@ p-tqdm==1.2
 pandas==0.25.3
 xlrd==1.2.0
 googledrivedownloader==0.4
-requests==2.22.0
+requests==2.31.0
